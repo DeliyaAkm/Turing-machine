@@ -5,6 +5,7 @@
 #include "array_sequence.h"
 #include "generator.h"
 #include "igenerator_rule.h"
+#include "lazy_rules.h"
 
 template <class T>
 class LazySequence : public Sequence<T> 
@@ -19,11 +20,12 @@ private:
         {
             if (generator && generator->HasNext()) 
             {
-                T nextVal = generator->GetNext(); 
+                //Передаем кэш в качестве контекста
+                T nextVal = generator->GetNext(cache); 
                 cache->Append(nextVal);                
             } else 
             {
-                throw IndexOutOfRangeException("Cannot materialize: reached the end of finite lazy sequence");
+                throw IndexOutOfRangeException("Reached the end of finite lazy sequence");
             }
         }
     }
@@ -32,7 +34,6 @@ public:
     LazySequence(IGeneratorRule<T>* rule, int initialCount = 0, const T* initialItems = nullptr) 
     {
         cache = new MutableArraySequence<T>();
-        
         if (initialItems != nullptr && initialCount > 0) 
         {
             for (int i = 0; i < initialCount; ++i) 
@@ -40,9 +41,7 @@ public:
                 cache->Append(initialItems[i]);
             }
         }
-        
-        //Передаем генератору указатель на кэш 
-        generator = new Generator<T>(cache, rule);
+        generator = rule ? new Generator<T>(rule) : nullptr;
     }
 
     ~LazySequence() override 
@@ -57,7 +56,6 @@ public:
         {
             throw IndexOutOfRangeException("Index cannot be negative");
         }
-        
         MaterializeUpTo(index);
         return cache->Get(index);
     }
@@ -70,9 +68,13 @@ public:
     const T& GetLast() const override 
     {
         int len = cache->GetLength();
+        if (len == 0 && (!generator || !generator->HasNext())) 
+        {
+            throw IndexOutOfRangeException();
+        }
         if (len == 0) 
         {
-            throw IndexOutOfRangeException("Sequence is empty");
+            return Get(0);
         }
         return cache->Get(len - 1); 
     }
@@ -88,16 +90,34 @@ public:
         return cache->GetSubsequence(startIndex, endIndex);
     }
 
-    //Заглушки........................................
-    Sequence<T>* Append(const T& item) override { throw NotImplementedException(); }
-    Sequence<T>* Prepend(const T& item) override { throw NotImplementedException(); }
-    Sequence<T>* InsertAt(const T& item, int index) override { throw NotImplementedException(); }
-    Sequence<T>* RemoveAt(int index) override { throw NotImplementedException(); }
-    Sequence<T>* Concat(Sequence<T>* other) override { throw NotImplementedException(); }
-    Sequence<T>* Map(T (*f)(const T&)) const override { throw NotImplementedException(); }
-    Sequence<T>* Where(bool (*predicate)(const T&)) const override { throw NotImplementedException(); }
+    Sequence<T>* Map(T (*f)(const T&)) const override 
+    {
+        return new LazySequence<T>(new MapRule<T>(this, f));
+    }
 
-    IEnumerator<T>* GetEnumerator() const override {
+    Sequence<T>* Where(bool (*predicate)(const T&)) const override 
+    {
+        return new LazySequence<T>(new WhereRule<T>(this, predicate));
+    }
+
+    Sequence<T>* Concat(Sequence<T>* other) override 
+    {
+        if (!other) 
+        {
+            throw InvalidArgumentException("Cannot concat with null");
+        }
+        return new LazySequence<T>(new ConcatRule<T>(this, other));
+    }
+
+    // Операции модификации не применимы к чисто ленивым спискам (константам),
+    // Но могут быть реализованы через правила, если необходимо:
+    Sequence<T>* InsertAt(const T& item, int index) override { throw InvalidOperationException("Not implemented here"); }
+    Sequence<T>* RemoveAt(int index) override { throw InvalidOperationException("Not implemented here"); }
+    Sequence<T>* Append(const T& item) override { throw InvalidOperationException("Not implemented here"); }
+    Sequence<T>* Prepend(const T& item) override { throw InvalidOperationException("Not implemented here"); }
+
+    IEnumerator<T>* GetEnumerator() const override 
+    {
         return cache->GetEnumerator();
     }
 };

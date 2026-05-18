@@ -1,0 +1,3 @@
+C:/Users/akmal/Desktop/proga_na_c/lb_4_inf/Turing-machine/build/CMakeFiles/TuringMachine.dir
+C:/Users/akmal/Desktop/proga_na_c/lb_4_inf/Turing-machine/build/CMakeFiles/edit_cache.dir
+C:/Users/akmal/Desktop/proga_na_c/lb_4_inf/Turing-machine/build/CMakeFiles/rebuild_cache.dir
