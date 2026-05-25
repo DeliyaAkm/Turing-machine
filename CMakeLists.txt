@@ -20,4 +20,4 @@ set(HEADERS
     turing_machine.h
 )
 
-add_executable(TuringMachine main.cpp ${HEADERS})
+add_executable(TuringMachine main.cpp tests.cpp)

@@ -167,7 +167,7 @@ public:
         return buildFromArray(tempArray, oldLen - 1);
     }
 
-    Sequence<T>* Concat(Sequence<T>* other) override 
+    Sequence<T>* Concat(const Sequence<T>* other) override 
     {
         if (!other)
         {
@@ -291,7 +291,7 @@ public:
         return this;
     }
 
-    Sequence<T>* Concat(Sequence<T>* other) override 
+    Sequence<T>* Concat(const Sequence<T>* other) override 
     {
         int otherLen = other->GetLength();
         int currentLen = GetLength();

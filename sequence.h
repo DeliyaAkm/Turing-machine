@@ -23,7 +23,7 @@ public:
     virtual Sequence<T>* Prepend(const T& item) = 0;
     virtual Sequence<T>* InsertAt(const T& item, int index) = 0;
     virtual Sequence<T>* RemoveAt(int index) = 0;
-    virtual Sequence<T>* Concat(Sequence<T>* other) = 0;
+    virtual Sequence<T>* Concat(const Sequence<T>* other) = 0;
 
     //Базовый комплект операций map-reduce
     virtual Sequence<T>* Map(T (*f)(const T&)) const = 0;

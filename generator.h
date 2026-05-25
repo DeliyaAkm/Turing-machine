@@ -34,7 +34,7 @@ public:
     }
 
     //Владелец передает контекст самостоятельно
-    T GetNext(const Sequence<T>* context) 
+    T GetNext(const Sequence<T>& context) 
     {
         if (!HasNext()) 
         {

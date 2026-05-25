@@ -79,9 +79,14 @@ public:
         }
 
         tape->WriteSymbol(headPosition, rule.writeSymbol);
-        headPosition += static_cast<int>(rule.moveDirection);
+        if (rule.moveDirection == Direction::Right) 
+        {
+            headPosition += 1;
+        } else if (rule.moveDirection == Direction::Left) 
+        {
+            headPosition -= 1;
+        }
         currentState = rule.nextState;
-
         return true; 
     }
 

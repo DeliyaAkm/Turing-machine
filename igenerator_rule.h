@@ -10,7 +10,7 @@ public:
     virtual ~IGeneratorRule() = default;
     
     //Правило получает историю только в момент вызова
-    virtual T Invoke(const Sequence<T>* context) = 0;
+    virtual T Invoke(const Sequence<T>& context) = 0;
 };
 
 #endif // IGENERATOR_RULE_H

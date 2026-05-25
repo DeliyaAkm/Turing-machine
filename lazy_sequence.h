@@ -21,7 +21,7 @@ private:
             if (generator && generator->HasNext()) 
             {
                 //Передаем кэш в качестве контекста
-                T nextVal = generator->GetNext(cache); 
+                T nextVal = generator->GetNext(*cache); 
                 cache->Append(nextVal);                
             } else 
             {
@@ -33,15 +33,32 @@ private:
 public:
     LazySequence(IGeneratorRule<T>* rule, int initialCount = 0, const T* initialItems = nullptr) 
     {
-        cache = new MutableArraySequence<T>();
-        if (initialItems != nullptr && initialCount > 0) 
+        cache = nullptr;
+        generator = nullptr;
+        
+        try 
         {
-            for (int i = 0; i < initialCount; ++i) 
+            cache = new MutableArraySequence<T>();
+            if (initialItems != nullptr && initialCount > 0) 
             {
-                cache->Append(initialItems[i]);
+                for (int i = 0; i < initialCount; ++i) 
+                {
+                    cache->Append(initialItems[i]);
+                }
             }
+            
+            if (rule) 
+            {
+                generator = new Generator<T>(rule);
+            }
+        } 
+        catch (...) 
+        {
+            delete cache;
+            delete generator;
+            delete rule; 
+            throw; 
         }
-        generator = rule ? new Generator<T>(rule) : nullptr;
     }
 
     ~LazySequence() override 
@@ -100,7 +117,7 @@ public:
         return new LazySequence<T>(new WhereRule<T>(this, predicate));
     }
 
-    Sequence<T>* Concat(Sequence<T>* other) override 
+    Sequence<T>* Concat(const Sequence<T>* other) override 
     {
         if (!other) 
         {
@@ -109,12 +126,25 @@ public:
         return new LazySequence<T>(new ConcatRule<T>(this, other));
     }
 
-    // Операции модификации не применимы к чисто ленивым спискам (константам),
-    // Но могут быть реализованы через правила, если необходимо:
-    Sequence<T>* InsertAt(const T& item, int index) override { throw InvalidOperationException("Not implemented here"); }
-    Sequence<T>* RemoveAt(int index) override { throw InvalidOperationException("Not implemented here"); }
-    Sequence<T>* Append(const T& item) override { throw InvalidOperationException("Not implemented here"); }
-    Sequence<T>* Prepend(const T& item) override { throw InvalidOperationException("Not implemented here"); }
+    Sequence<T>* InsertAt(const T& item, int index) override 
+    { 
+        return new LazySequence<T>(new ModifyRule<T>(this, item, index));
+    }
+    
+    Sequence<T>* RemoveAt(int index) override 
+    { 
+        return new LazySequence<T>(new ModifyRule<T>(this, index));
+    }
+    
+    Sequence<T>* Prepend(const T& item) override 
+    { 
+        return new LazySequence<T>(new ModifyRule<T>(this, item, 0));
+    }
+    
+    Sequence<T>* Append(const T& item) override 
+    { 
+        return new LazySequence<T>(new AppendRule<T>(this, item));
+    }
 
     IEnumerator<T>* GetEnumerator() const override 
     {
