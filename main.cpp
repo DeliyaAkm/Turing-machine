@@ -207,7 +207,7 @@ void SetupInversionRules(TuringMachine& tm)
     tm.AddRule(0, '_', 1, '_', Direction::Stay);
 }
 
-// Функция для правил AKMALOVA -> DELIYA
+//Функция для правил AKMALOVA -> DELIYA
 void SetupAkmalovaRules(TuringMachine& tm) 
 {
     tm.AddRule(0, 'A', 1, 'D', Direction::Right);
